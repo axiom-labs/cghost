@@ -1,7 +1,7 @@
 BUILD_DIR := build
 
 debug:
-	@ $(MAKE) -f c.make NAME=ghost MODE=debug SOURCE_DIR=src
+	@ $(MAKE) -f ghost.make NAME=ghost MODE=debug SOURCE_DIR=src
 	@ cp build/ghost ghost
 
 clean:
@@ -10,7 +10,7 @@ clean:
 	@ rm ghost
 
 ghost:
-	@ $(MAKE) -f c.make NAME=ghost MODE=release SOURCE_DIR=src
+	@ $(MAKE) -f ghost.make NAME=ghost MODE=release SOURCE_DIR=src
 	@ cp build/ghost ghost
 
 .PHONY: clean ghost debug
