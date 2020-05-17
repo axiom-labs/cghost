@@ -3,6 +3,11 @@
 
 #include "colors.h"
 
+// Reads the contents of the file at [path] and returns
+// it as a heap allocated string.
+//
+// Returns NULL if the path could not be found. Exits if
+// it was found but could not be read.
 char* readFile(const char* path) {
     FILE* file = fopen(path, "rb");
 
@@ -11,10 +16,12 @@ char* readFile(const char* path) {
         exit(74);
     }
 
+    // Find out how big the file is
     fseek(file, 0L, SEEK_END);
     size_t fileSize = ftell(file);
     rewind(file);
 
+    // Allocate a buffer for it
     char* buffer = (char*)malloc(fileSize + 1);
 
     if (buffer == NULL) {
@@ -22,6 +29,7 @@ char* readFile(const char* path) {
         exit(74);
     }
 
+    // Read the entire file
     size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
 
     if (bytesRead < fileSize) {

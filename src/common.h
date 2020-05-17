@@ -20,7 +20,7 @@
 // intended to be used for production code. They default to off.
 
 // Set to true to print out the compiled bytecode.
-#define DEBUG_PRINT_CODE true
+#define DEBUG_PRINT_CODE false
 
 // Set to true to print out executions as they occur.
 #define DEBUG_TRACE_EXECUTION false
