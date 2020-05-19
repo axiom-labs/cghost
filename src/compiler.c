@@ -14,6 +14,8 @@
 typedef struct {
     Token current;
     Token previous;
+    int expressions;
+    bool hadCall;
     bool hadError;
     bool panicMode;
 } Parser;
@@ -665,8 +667,13 @@ static void parsePrecedence(Precedence precedence) {
 
     bool canAssign = precedence <= PREC_ASSIGNMENT;
     prefixRule(canAssign);
+    parser.expressions++;
 
     while (precedence <= getRule(parser.current.type)->precedence) {
+        if (check(TOKEN_LEFT_PAREN)) {
+            parser.hadCall = true;
+        }
+
         advance();
 
         ParseFn infixRule = getRule(parser.previous.type)->infix;
@@ -812,14 +819,21 @@ static void varDeclaration() {
         emitByte(OP_NULL);
     }
 
-    consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
-
     defineVariable(global);
 }
 
 static void expressionStatement() {
+    parser.hadCall = false;
+    parser.expressions = 0;
+
     expression();
-    consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
+    match(TOKEN_SEMICOLON);
+
+    if (parser.expressions <= 1 && !parser.hadCall) {
+        error("Unexpected expression.");
+        return;
+    }
+
     emitByte(OP_POP);
 }
 
@@ -895,7 +909,6 @@ static void ifStatement() {
 static void includeStatement() {
     consume(TOKEN_STRING, "Expect a string after include");
     emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
-    consume(TOKEN_SEMICOLON, "Expect ';' after include.");
 
     emitByte(OP_INCLUDE);
 }
@@ -905,7 +918,7 @@ static void returnStatement() {
         error("Cannot return from top-level code.");
     }
 
-    if (match(TOKEN_SEMICOLON)) {
+    if (match(TOKEN_SEMICOLON) || check(TOKEN_RIGHT_BRACE)) {
         emitReturn();
     } else {
         if (current->type == TYPE_CONSTRUCTOR) {
@@ -913,7 +926,7 @@ static void returnStatement() {
         }
 
         expression();
-        consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
+
         emitByte(OP_RETURN);
     }
 }
@@ -992,6 +1005,8 @@ static void statement() {
         beginScope();
         block();
         endScope();
+    } else if (match(TOKEN_SEMICOLON)) {
+        // Do nothing
     } else {
         expressionStatement();
     }
