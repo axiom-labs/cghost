@@ -7,7 +7,9 @@
 typedef struct {
     const char* start;
     const char* current;
+    const char* currentLine;
     int line;
+    int position;
 } Scanner;
 
 Scanner scanner;
@@ -15,7 +17,9 @@ Scanner scanner;
 void initScanner(const char* source) {
     scanner.start = source;
     scanner.current = source;
+    scanner.currentLine = source;
     scanner.line = 1;
+    scanner.position = 1;
 }
 
 static bool isAlpha(char c) {
@@ -63,6 +67,8 @@ static Token makeToken(TokenType type) {
     token.start = scanner.start;
     token.length = (int)(scanner.current - scanner.start);
     token.line = scanner.line;
+    token.column = scanner.position + token.length;
+    token.currentLine = scanner.currentLine;
 
     return token;
 }
@@ -73,6 +79,7 @@ static Token errorToken(const char* message) {
     token.start = message;
     token.length = (int)strlen(message);
     token.line = scanner.line;
+    token.column = scanner.position - 1;
 
     return token;
 }

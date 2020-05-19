@@ -53,19 +53,19 @@ typedef uint64_t Value;
 typedef union {
     uint64_t bits;
     double num;
-    } DoubleUnion;
+} DoubleUnion;
 
-    static inline double valueToNum(Value value) {
-        DoubleUnion data;
-        data.bits = value;
-        return data.num;
-    }
+static inline double valueToNum(Value value) {
+    DoubleUnion data;
+    data.bits = value;
+    return data.num;
+}
 
-    static inline Value numToValue(double num) {
-        DoubleUnion data;
-        data.num = num;
-        return data.bits;
-    }
+static inline Value numToValue(double num) {
+    DoubleUnion data;
+    data.num = num;
+    return data.bits;
+}
 #else
 
 typedef enum {

@@ -88,11 +88,16 @@ static Chunk* currentChunk() {
 }
 
 static void errorAt(Token* token, const char* message) {
-    if (parser.panicMode) return;
+    if (parser.panicMode) {
+        return;
+    }
 
     parser.panicMode = true;
 
-    fprintf(stderr, "[line %d] Error", token->line);
+    int length = token->start - token->currentLine + token->length;
+    const char *line = token->currentLine;
+
+    fprintf(stderr, "[%d:%d] Error", token->line, token->column);
 
     if (token->type == TOKEN_EOF) {
         fprintf(stderr, " at end");
@@ -102,7 +107,20 @@ static void errorAt(Token* token, const char* message) {
         fprintf(stderr, " at '%.*s'", token->length, token->start);
     }
 
-    fprintf(stderr, ": %s\n", message);
+    if (token->type != TOKEN_EOF) {
+        fprintf(stderr, ": %s\n", message);
+        fprintf(stderr, "  | %.*s\n", length, line);
+        fprintf(stderr, "    %*s", length - token->length, "");
+
+        for (int i = 0; i < token->length; i++) {
+            fputc('^', stderr);
+        }
+    } else {
+        fprintf(stderr, ": %s\n", message);
+    }
+
+    fprintf(stderr, "\n");
+    fflush(stderr);
 
     parser.hadError = true;
 }
@@ -829,7 +847,7 @@ static void expressionStatement() {
     expression();
     match(TOKEN_SEMICOLON);
 
-    if (parser.expressions <= 1 && !parser.hadCall) {
+    if (parser.expressions <= 1 || !parser.hadCall) {
         error("Unexpected expression.");
         return;
     }

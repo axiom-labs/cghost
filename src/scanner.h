@@ -57,8 +57,10 @@ typedef enum {
 typedef struct {
     TokenType type;
     const char* start;
+    const char* currentLine;
     int length;
     int line;
+    int column;
 } Token;
 
 void initScanner(const char* source);
