@@ -194,6 +194,23 @@ void printObject(Value value) {
         case OBJ_STRING:
             printf("%s", AS_CSTRING(value));
             break;
+
+        case OBJ_LIST: {
+            ObjList* list = AS_LIST(value);
+            printf("[");
+
+            for (int i = 0; i < list->values.count; ++i) {
+                printValue(list->values.values[i]);
+
+                if (i != list->values.count - 1) {
+                    printf(", ");
+                }
+            }
+
+            printf("]");
+            break;
+        }
+
         case OBJ_UPVALUE:
             printf("upvalue");
             break;

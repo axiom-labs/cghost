@@ -655,6 +655,23 @@ static InterpretResult run() {
 
                 break;
             }
+
+            case OP_NEW_LIST: {
+                ObjList* list = newList();
+                push(OBJ_VAL(list));
+                break;
+            }
+
+            case OP_ADD_LIST: {
+                Value addValue = pop();
+                Value listValue = pop();
+
+                ObjList* list = AS_LIST(listValue);
+                writeValueArray(&list->values, addValue);
+
+                push(OBJ_VAL(list));
+                break;
+            }
         }
     }
 
