@@ -11,6 +11,8 @@ typedef enum {
     OP_FALSE,
     OP_NEW_LIST,
     OP_ADD_LIST,
+    OP_SUBSCRIPT,
+    OP_SUBSCRIPT_ASSIGN,
     OP_POP,
     OP_GET_LOCAL,
     OP_SET_LOCAL,
