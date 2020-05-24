@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "compiler.h"
+#include "include/ghost.h"
 #include "memory.h"
 #include "vm.h"
 
@@ -12,8 +13,8 @@
 
 #define GC_HEAP_GROW_FACTOR 2
 
-void* reallocate(void* previous, size_t oldSize, size_t newSize) {
-    vm.bytesAllocated += newSize - oldSize;
+void* reallocate(GhostVM *vm, void* previous, size_t oldSize, size_t newSize) {
+    vm->bytesAllocated += newSize - oldSize;
 
     if (newSize > oldSize) {
         #if DEBUG_STRESS_GC
@@ -21,7 +22,7 @@ void* reallocate(void* previous, size_t oldSize, size_t newSize) {
         #endif
     }
 
-    if (vm.bytesAllocated > vm.nextGC) {
+    if (vm->bytesAllocated > vm->nextGC) {
         collectGarbage();
     }
 

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "include/ghost.h"
 #include "chunk.h"
 #include "memory.h"
 #include "vm.h"
@@ -35,10 +36,10 @@ void writeChunk(Chunk* chunk, uint8_t byte, int line) {
     chunk->count++;
 }
 
-int addConstant(Chunk* chunk, Value value) {
-    push(value);
+int addConstant(GhostVM *vm, Chunk* chunk, Value value) {
+    push(vm, value);
     writeValueArray(&chunk->constants, value);
-    pop();
+    pop(vm);
 
     return chunk->constants.count - 1;
 }

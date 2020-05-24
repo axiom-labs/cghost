@@ -6,13 +6,15 @@
 #include "common.h"
 #include "chunk.h"
 #include "debug.h"
+#include "include/ghost.h"
+#include "memory.h"
 #include "utilities.h"
 #include "vm.h"
 #include "vendor/linenoise.h"
 
 #define VERSION "dev-master"
 
-static void repl() {
+static void repl(GhostVM *vm) {
     char *line;
 
     puts("Ghost (" ANSI_COLOR_CYAN VERSION ANSI_COLOR_RESET ")");
@@ -28,13 +30,13 @@ static void repl() {
         linenoiseHistoryAdd(line);
         linenoiseHistorySave("ghost_history.txt");
 
-        interpret(fullLine);
+        interpret(vm, fullLine);
     }
 }
 
-static void runFile(const char* path) {
+static void runFile(GhostVM *vm, const char* path) {
     char* source = readFile(path);
-    InterpretResult result = interpret(source);
+    InterpretResult result = interpret(vm, source);
     free(source);
 
     if (result == INTERPRET_COMPILE_ERROR) exit(65);
@@ -42,18 +44,18 @@ static void runFile(const char* path) {
 }
 
 int main(int argc, const char* argv[]) {
-    initVM();
+    GhostVM *vm = ghostNewVM(reallocate);
 
     if (argc == 1) {
-        repl();
+        repl(vm);
     } else if (argc == 2) {
-        runFile(argv[1]);
+        runFile(vm, argv[1]);
     } else {
         fprintf(stderr, "Usage: ghost [path]\n");
         exit(64);
     }
 
-    freeVM();
+    ghostFreeVM(vm);
 
     return 0;
 }
