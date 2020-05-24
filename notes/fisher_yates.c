@@ -1,3 +1,12 @@
+// This C program implements Fisher-Yates algorithm for array shuffling.
+//
+// The Fisher–Yates shuffle (named after Ronald Fisher and Frank Yates), also known as the Knuth shuffle
+// (after Donald Knuth), is an algorithm for generating a random permutation of a finite set—in plain terms,
+// for randomly shuffling the set. A variant of the Fisher–Yates shuffle, known as Sattolo’s algorithm, may be
+// used to generate random cycles of length n instead. The Fisher–Yates shuffle is unbiased, so that every
+// permutation is equally likely. The modern version of the algorithm is also rather efficient, requiring
+// only time proportional to the number of items being shuffled and no additional storage space.
+
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
