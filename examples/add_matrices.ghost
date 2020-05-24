@@ -8,27 +8,27 @@
 //
 // We can perform matrix addition in Ghost using a nested loop.
 
-var x = [
+let x = [
     [12, 7, 3],
     [4, 5, 6],
     [7, 8, 9],
 ];
 
-var y = [
+let y = [
     [5, 8, 1],
     [6, 7, 3],
     [4, 5, 9],
 ];
 
-var result = [
+let result = [
     [0, 0, 0],
     [0, 0, 0],
     [0, 0, 0],
 ];
 
-var i;
-var j;
-var k;
+let i;
+let j;
+let k;
 
 for (i = 0; i < x.length(); i = i + 1) {
     for (j = 0; j < x[0].length(); j = j + 1) {
