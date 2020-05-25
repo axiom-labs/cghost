@@ -23,7 +23,7 @@
 void* reallocate(GhostVM *vm, void* previous, size_t oldSize, size_t newSize);
 void markObject(GhostVM *vm, Obj* object);
 void markValue(GhostVM *vm, Value value);
-void collectGarbage();
-void freeObjects();
+void collectGarbage(GhostVM *vm);
+void freeObjects(GhostVM *vm);
 
 #endif

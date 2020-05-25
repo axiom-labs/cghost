@@ -96,7 +96,9 @@ void ghostFreeVM(GhostVM *vm) {
 
     vm->constructorString = NULL;
 
-    freeObjects();
+    freeObjects(vm);
+
+    free(vm);
 }
 
 void push(GhostVM *vm, Value value) {
