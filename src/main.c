@@ -7,7 +7,6 @@
 #include "chunk.h"
 #include "debug.h"
 #include "include/ghost.h"
-#include "memory.h"
 #include "utilities.h"
 #include "vm.h"
 #include "vendor/linenoise.h"
@@ -32,6 +31,11 @@ static void repl(GhostVM *vm) {
 
         interpret(vm, fullLine);
     }
+}
+
+static void *reallocate(void *memory, size_t oldSize, size_t newSize)
+{
+    return realloc(memory, newSize);
 }
 
 static void runFile(GhostVM *vm, const char* path) {
