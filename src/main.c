@@ -29,7 +29,7 @@ static void repl(GhostVM *vm) {
         linenoiseHistoryAdd(line);
         linenoiseHistorySave("ghost_history.txt");
 
-        interpret(vm, fullLine);
+        ghostInterpret(vm, fullLine);
     }
 }
 
@@ -40,7 +40,7 @@ static void *reallocate(void *memory, size_t oldSize, size_t newSize)
 
 static void runFile(GhostVM *vm, const char* path) {
     char* source = readFile(path);
-    InterpretResult result = interpret(vm, source);
+    InterpretResult result = ghostInterpret(vm, source);
     free(source);
 
     if (result == INTERPRET_COMPILE_ERROR) exit(65);

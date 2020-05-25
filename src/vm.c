@@ -58,9 +58,9 @@ void runtimeError(GhostVM *vm, const char* format, ...) {
 }
 
 void defineNative(GhostVM *vm, const char* name, NativeFn function) {
-    push(vm, OBJ_VAL(copyString(name, (int)strlen(name))));
-    push(vm, OBJ_VAL(newNative(function)));
-    tableSet(&vm->globals, AS_STRING(vm->stack[0]), vm->stack[1]);
+    push(vm, OBJ_VAL(copyString(vm, name, (int)strlen(name))));
+    push(vm, OBJ_VAL(newNative(vm, function)));
+    tableSet(vm, &vm->globals, AS_STRING(vm->stack[0]), vm->stack[1]);
     pop(vm);
     pop(vm);
 }
@@ -82,17 +82,17 @@ GhostVM *ghostNewVM(GhostReallocateFn reallocateFn) {
     initTable(&vm->strings);
 
     vm->constructorString = NULL;
-    vm->constructorString = copyString("constructor", 11);
+    vm->constructorString = copyString(vm, "constructor", 11);
 
-    defineAllNatives();
-    registerMathModule();
+    defineAllNatives(vm);
+    registerMathModule(vm);
 
     return vm;
 }
 
 void ghostFreeVM(GhostVM *vm) {
-    freeTable(&vm->globals);
-    freeTable(&vm->strings);
+    freeTable(vm, &vm->globals);
+    freeTable(vm, &vm->strings);
 
     vm->constructorString = NULL;
 
@@ -116,7 +116,7 @@ static Value peek(GhostVM *vm, int distance) {
 
 static bool call(GhostVM *vm, ObjClosure* closure, int argCount) {
     if (argCount != closure->function->arity) {
-        runtimeError("Expected %d arguments but got %d.", closure->function->arity, argCount);
+        runtimeError(vm, "Expected %d arguments but got %d.", closure->function->arity, argCount);
         return false;
     }
 
@@ -144,13 +144,13 @@ static bool callValue(GhostVM *vm, Value callee, int argCount) {
 
             case OBJ_CLASS: {
                 ObjClass* klass = AS_CLASS(callee);
-                vm->stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
+                vm->stackTop[-argCount - 1] = OBJ_VAL(newInstance(vm, klass));
 
                 Value constructor;
                 if (tableGet(&klass->methods, vm->constructorString, &constructor)) {
                     return call(vm, AS_CLOSURE(constructor), argCount);
                 } else if (argCount != 0) {
-                    runtimeError("Expected 0 arguments but got %d.", argCount);
+                    runtimeError(vm, "Expected 0 arguments but got %d.", argCount);
                     return false;
                 }
 
@@ -163,7 +163,7 @@ static bool callValue(GhostVM *vm, Value callee, int argCount) {
 
             case OBJ_NATIVE: {
                 NativeFn native = AS_NATIVE(callee);
-                Value result = native(argCount, vm->stackTop - argCount);
+                Value result = native(vm, argCount, vm->stackTop - argCount);
                 vm->stackTop -= argCount + 1;
                 push(vm, result);
                 return true;
@@ -183,7 +183,7 @@ static bool invokeFromClass(GhostVM *vm, ObjClass* klass, ObjString* name, int a
     Value method;
 
     if (!tableGet(&klass->methods, name, &method)) {
-        runtimeError("Undefined property '%s'.", name->chars);
+        runtimeError(vm, "Undefined property '%s'.", name->chars);
         return false;
     }
 
@@ -227,11 +227,11 @@ static bool invoke(GhostVM *vm, ObjString* name, int argCount) {
         }
 
         case OBJ_STRING: {
-            return declareString(name->chars, argCount + 1);
+            return declareString(vm, name->chars, argCount + 1);
         }
 
         case OBJ_LIST: {
-            return declareList(name->chars, argCount + 1);
+            return declareList(vm, name->chars, argCount + 1);
         }
 
          default: {
@@ -245,11 +245,11 @@ static bool bindMethod(GhostVM *vm, ObjClass* klass, ObjString* name) {
     Value method;
 
     if (!tableGet(&klass->methods, name, &method)) {
-        runtimeError("Undefined property '%s' on '%s'.", name->chars, klass->name->chars);
+        runtimeError(vm, "Undefined property '%s' on '%s'.", name->chars, klass->name->chars);
         return false;
     }
 
-    ObjBoundMethod* bound = newBoundMethod(peek(vm, 0), AS_CLOSURE(method));
+    ObjBoundMethod* bound = newBoundMethod(vm, peek(vm, 0), AS_CLOSURE(method));
     pop(vm);
     push(vm, OBJ_VAL(bound));
     return true;
@@ -266,7 +266,7 @@ static ObjUpvalue* captureUpvalue(GhostVM *vm, Value* local) {
 
     if (upvalue != NULL && upvalue->location == local) return upvalue;
 
-    ObjUpvalue* createdUpvalue = newUpvalue(local);
+    ObjUpvalue* createdUpvalue = newUpvalue(vm, local);
     createdUpvalue->next = upvalue;
 
     if (prevUpvalue == NULL) {
@@ -290,7 +290,7 @@ static void closeUpvalues(GhostVM *vm, Value* last) {
 static void defineMethod(GhostVM *vm, ObjString* name) {
     Value method = peek(vm, 0);
     ObjClass* klass = AS_CLASS(peek(vm, 1));
-    tableSet(&klass->methods, name, method);
+    tableSet(vm, &klass->methods, name, method);
     pop(vm);
 }
 
@@ -304,12 +304,12 @@ static void concatenate(GhostVM *vm) {
     ObjString* a = AS_STRING(peek(vm, 1));
 
     int length = a->length + b->length;
-    char* chars = ALLOCATE(char, length + 1);
+    char* chars = ALLOCATE(vm, char, length + 1);
     memcpy(chars, a->chars, a->length);
     memcpy(chars + a->length, b->chars, b->length);
     chars[length] = '\0';
 
-    ObjString* result = takeString(chars, length);
+    ObjString* result = takeString(vm, chars, length);
     pop(vm);
     pop(vm);
     push(vm, OBJ_VAL(result));
@@ -394,7 +394,7 @@ static InterpretResult run(GhostVM *vm) {
 
             case OP_DEFINE_GLOBAL: {
                 ObjString* name = READ_STRING();
-                tableSet(&vm->globals, name, peek(vm, 0));
+                tableSet(vm, &vm->globals, name, peek(vm, 0));
 
                 pop(vm);
                 break;
@@ -403,7 +403,7 @@ static InterpretResult run(GhostVM *vm) {
             case OP_SET_GLOBAL: {
                 ObjString* name = READ_STRING();
 
-                if (tableSet(&vm->globals, name, peek(vm, 0))) {
+                if (tableSet(vm, &vm->globals, name, peek(vm, 0))) {
                     tableDelete(&vm->globals, name);
                     runtimeError(vm, "Undefined variable '%s'.", name->chars);
                     return INTERPRET_RUNTIME_ERROR;
@@ -455,7 +455,7 @@ static InterpretResult run(GhostVM *vm) {
                 }
 
                 ObjInstance* instance = AS_INSTANCE(peek(vm, 1));
-                tableSet(&instance->fields, READ_STRING(), peek(vm, 0));
+                tableSet(vm, &instance->fields, READ_STRING(), peek(vm, 0));
 
                 Value value = pop(vm);
                 pop(vm);
@@ -584,7 +584,7 @@ static InterpretResult run(GhostVM *vm) {
 
             case OP_CLOSURE: {
                 ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
-                ObjClosure* closure = newClosure(function);
+                ObjClosure* closure = newClosure(vm, function);
                 push(vm, OBJ_VAL(closure));
 
                 for (int i = 0; i < closure->upvalueCount; i++) {
@@ -625,7 +625,7 @@ static InterpretResult run(GhostVM *vm) {
             }
 
             case OP_CLASS:
-                push(vm, OBJ_VAL(newClass(READ_STRING())));
+                push(vm, OBJ_VAL(newClass(vm, READ_STRING())));
                 break;
 
             case OP_INHERIT: {
@@ -637,7 +637,7 @@ static InterpretResult run(GhostVM *vm) {
                 }
 
                 ObjClass* subclass = AS_CLASS(peek(vm, 0));
-                tableAddAll(&AS_CLASS(superclass)->methods, &subclass->methods);
+                tableAddAll(vm, &AS_CLASS(superclass)->methods, &subclass->methods);
                 pop(vm);  // subclass
                 break;
             }
@@ -654,7 +654,7 @@ static InterpretResult run(GhostVM *vm) {
                 if (function == NULL) return INTERPRET_COMPILE_ERROR;
 
                 push(vm, OBJ_VAL(function));
-                ObjClosure *closure = newClosure(function);
+                ObjClosure *closure = newClosure(vm, function);
                 pop(vm);
 
                 frame = &vm->frames[vm->frameCount++];
@@ -666,7 +666,7 @@ static InterpretResult run(GhostVM *vm) {
             }
 
             case OP_NEW_LIST: {
-                ObjList* list = newList();
+                ObjList* list = newList(vm);
                 push(vm, OBJ_VAL(list));
                 break;
             }
@@ -676,7 +676,7 @@ static InterpretResult run(GhostVM *vm) {
                 Value listValue = pop(vm);
 
                 ObjList* list = AS_LIST(listValue);
-                writeValueArray(&list->values, addValue);
+                writeValueArray(vm, &list->values, addValue);
 
                 push(vm, OBJ_VAL(list));
                 break;
@@ -747,7 +747,7 @@ InterpretResult ghostInterpret(GhostVM *vm, const char* source) {
     if (function == NULL) return INTERPRET_COMPILE_ERROR;
 
     push(vm, OBJ_VAL(function));
-    ObjClosure* closure = newClosure(function);
+    ObjClosure* closure = newClosure(vm, function);
     pop(vm);
     push(vm, OBJ_VAL(closure));
     callValue(vm, OBJ_VAL(closure), 0);

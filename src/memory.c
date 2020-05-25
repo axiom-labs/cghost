@@ -84,14 +84,14 @@ static void blackenObject(GhostVM *vm, Obj* object) {
         case OBJ_CLASS: {
             ObjClass* klass = (ObjClass*)object;
             markObject(vm, (Obj*)klass->name);
-            markTable(&klass->methods);
+            markTable(vm, &klass->methods);
             break;
         }
 
         case OBJ_NATIVE_CLASS: {
             ObjNativeClass *klass = (ObjNativeClass*)object;
             markObject(vm, (Obj*)klass->name);
-            markTable(&klass->methods);
+            markTable(vm, &klass->methods);
             break;
         }
 
@@ -115,7 +115,7 @@ static void blackenObject(GhostVM *vm, Obj* object) {
         case OBJ_INSTANCE: {
             ObjInstance* instance = (ObjInstance*)object;
             markObject(vm, (Obj*)instance->klass);
-            markTable(&instance->fields);
+            markTable(vm, &instance->fields);
             break;
         }
 
@@ -141,14 +141,14 @@ static void freeObject(GhostVM* vm, Obj* object) {
             break;
         case OBJ_CLASS: {
             ObjClass* klass = (ObjClass*)object;
-            freeTable(&klass->methods);
+            freeTable(vm, &klass->methods);
             FREE(vm, ObjClass, object);
             break;
         }
 
         case OBJ_NATIVE_CLASS: {
             ObjNativeClass* klass = (ObjNativeClass*)object;
-            freeTable(&klass->methods);
+            freeTable(vm, &klass->methods);
             FREE(vm, ObjClass, object);
             break;
         }
@@ -169,7 +169,7 @@ static void freeObject(GhostVM* vm, Obj* object) {
 
         case OBJ_INSTANCE: {
             ObjInstance* instance = (ObjInstance*)object;
-            freeTable(&instance->fields);
+            freeTable(vm, &instance->fields);
             FREE(vm, ObjInstance, object);
             break;
         }
@@ -212,7 +212,7 @@ static void markRoots(GhostVM *vm) {
         markObject(vm, (Obj*)upvalue);
     }
 
-    markTable(&vm->globals);
+    markTable(vm, &vm->globals);
     markCompilerRoots();
     markObject(vm, (Obj*)vm->constructorString);
 }

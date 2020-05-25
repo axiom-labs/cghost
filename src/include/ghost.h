@@ -37,7 +37,7 @@ typedef enum {
     INTERPRET_RUNTIME_ERROR
 } InterpretResult;
 
-InterpretResult interpret(GhostVM *vm, const char *source);
+// InterpretResult interpret(GhostVM *vm, const char *source);
 
 // Runs [source], a string of Ghost source code in [vm]. Returns zero if
 // sucessful.

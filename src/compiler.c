@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "include/ghost.h"
 #include "common.h"
 #include "compiler.h"
 #include "memory.h"
@@ -213,17 +214,17 @@ static void patchJump(int offset) {
     currentChunk()->code[offset + 1] = jump & 0xff;
 }
 
-static void initCompiler(Compiler* compiler, FunctionType type) {
+static void initCompiler(GhostVM *vm, Compiler* compiler, FunctionType type) {
     compiler->enclosing = current;
     compiler->function = NULL;
     compiler->type = type;
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
-    compiler->function = newFunction();
+    compiler->function = newFunction(vm);
     current = compiler;
 
     if (type != TYPE_SCRIPT) {
-        current->function->name = copyString(parser.previous.start, parser.previous.length);
+        current->function->name = copyString(vm, parser.previous.start, parser.previous.length);
     }
 
     Local* local = &current->locals[current->localCount++];
@@ -283,7 +284,7 @@ static ParseRule* getRule(TokenType type);
 static void parsePrecedence(GhostVM *vm, Precedence precedence);
 
 static uint8_t identifierConstant(GhostVM *vm, Token* name) {
-    return makeConstant(vm, OBJ_VAL(copyString(name->start, name->length)));
+    return makeConstant(vm, OBJ_VAL(copyString(vm, name->start, name->length)));
 }
 
 static bool identifiersEqual(Token* a, Token* b) {
@@ -545,6 +546,7 @@ static void string(GhostVM *vm, bool canAssign) {
     // We could support string escape sequences like
     // \n here.
     emitConstant(vm, OBJ_VAL(copyString(
+        vm,
         parser.previous.start + 1,
         parser.previous.length - 2
     )));
@@ -726,7 +728,7 @@ static void block(GhostVM *vm) {
 
 static void function(GhostVM *vm, FunctionType type) {
     Compiler compiler;
-    initCompiler(&compiler, type);
+    initCompiler(vm, &compiler, type);
     beginScope();
 
     // Compile the parameter list
@@ -923,7 +925,7 @@ static void ifStatement(GhostVM *vm) {
 
 static void includeStatement(GhostVM *vm) {
     consume(TOKEN_STRING, "Expect a string after include");
-    emitConstant(vm, OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
+    emitConstant(vm, OBJ_VAL(copyString(vm, parser.previous.start + 1, parser.previous.length - 2)));
     consume(TOKEN_SEMICOLON, "Expect ';' after include.");
 
     emitByte(vm, OP_INCLUDE);
@@ -1026,10 +1028,10 @@ static void statement(GhostVM *vm) {
     }
 }
 
-ObjFunction* compile(GhostVM *vm, const char* source) {
+ObjFunction* ghostCompile(GhostVM *vm, const char* source) {
     initScanner(source);
     Compiler compiler;
-    initCompiler(&compiler, TYPE_SCRIPT);
+    initCompiler(vm, &compiler, TYPE_SCRIPT);
 
     parser.hadError = false;
     parser.panicMode = false;

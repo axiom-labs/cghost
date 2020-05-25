@@ -18,7 +18,7 @@ void freeChunk(GhostVM *vm, Chunk* chunk) {
     FREE_ARRAY(vm, uint8_t, chunk->code, chunk->capacity);
     FREE_ARRAY(vm, int, chunk->lines, chunk->capacity);
 
-    freeValueArray(&chunk->constants);
+    freeValueArray(vm, &chunk->constants);
 
     initChunk(chunk);
 }
@@ -38,7 +38,7 @@ void writeChunk(GhostVM *vm, Chunk* chunk, uint8_t byte, int line) {
 
 int addConstant(GhostVM *vm, Chunk* chunk, Value value) {
     push(vm, value);
-    writeValueArray(&chunk->constants, value);
+    writeValueArray(vm, &chunk->constants, value);
     pop(vm);
 
     return chunk->constants.count - 1;
