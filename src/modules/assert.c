@@ -178,6 +178,34 @@ assertIsNumber(GhostVM *vm, int argCount, Value *args)
     return NULL_VAL;
 }
 
+static Value
+assertIsString(GhostVM *vm, int argCount, Value *args)
+{
+    if (argCount == 0)
+    {
+        runtimeError(vm, "Assert.isString() expects at least one argument (%d given).", argCount);
+        return NULL_VAL;
+    }
+
+    if (!IS_OBJ(args[0]) || OBJ_TYPE(args[0]) != OBJ_STRING)
+    {
+        if (argCount == 2)
+        {
+            char message[1024];
+            sprintf(message, "Failed asserting that %s", AS_CSTRING(args[2]));
+            runtimeError(vm, message);
+        }
+        else
+        {
+            runtimeError(vm, "Assert.isString() failed.");
+        }
+
+        exit(70);
+    }
+
+    return NULL_VAL;
+}
+
 void registerAssertModule(GhostVM *vm)
 {
     ObjString *name = copyString(vm, "Assert", 6);
@@ -191,6 +219,7 @@ void registerAssertModule(GhostVM *vm)
     defineNativeMethod(vm, klass, "isBool", assertIsBool);
     defineNativeMethod(vm, klass, "isNull", assertIsNull);
     defineNativeMethod(vm, klass, "isNumber", assertIsNumber);
+    defineNativeMethod(vm, klass, "isString", assertIsString);
 
     tableSet(vm, &vm->globals, name, OBJ_VAL(klass));
     pop(vm);
