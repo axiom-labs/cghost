@@ -206,6 +206,134 @@ assertIsString(GhostVM *vm, int argCount, Value *args)
     return NULL_VAL;
 }
 
+static Value
+assertGreaterThan(GhostVM *vm, int argCount, Value *args)
+{
+    if (argCount < 2)
+    {
+        runtimeError(vm, "Assert.greaterThan() expects at least two arguments (%d given).", argCount);
+        return NULL_VAL;
+    }
+
+    Value a = args[0];
+    Value b = args[1];
+    Value result = BOOL_VAL(a > b);
+
+    if (isFalsey(result))
+    {
+        if (argCount == 3)
+        {
+            char message[1024];
+            sprintf(message, "Failed asserting that %s", AS_CSTRING(args[2]));
+            runtimeError(vm, message);
+        }
+        else
+        {
+            runtimeError(vm, "Assert.greaterThan() failed.");
+        }
+
+        exit(70);
+    }
+
+    return NULL_VAL;
+}
+
+static Value
+assertGreaterThanOrEqual(GhostVM *vm, int argCount, Value *args)
+{
+    if (argCount < 2)
+    {
+        runtimeError(vm, "Assert.greaterThanOrEqual() expects at least two arguments (%d given).", argCount);
+        return NULL_VAL;
+    }
+
+    Value a = args[0];
+    Value b = args[1];
+    Value result = BOOL_VAL(a >= b);
+
+    if (isFalsey(result))
+    {
+        if (argCount == 3)
+        {
+            char message[1024];
+            sprintf(message, "Failed asserting that %s", AS_CSTRING(args[2]));
+            runtimeError(vm, message);
+        }
+        else
+        {
+            runtimeError(vm, "Assert.greaterThanOrEqual() failed.");
+        }
+
+        exit(70);
+    }
+
+    return NULL_VAL;
+}
+
+static Value
+assertLessThan(GhostVM *vm, int argCount, Value *args)
+{
+    if (argCount < 2)
+    {
+        runtimeError(vm, "Assert.lessThan() expects at least two arguments (%d given).", argCount);
+        return NULL_VAL;
+    }
+
+    Value a = args[0];
+    Value b = args[1];
+    Value result = BOOL_VAL(a < b);
+
+    if (isFalsey(result))
+    {
+        if (argCount == 3)
+        {
+            char message[1024];
+            sprintf(message, "Failed asserting that %s", AS_CSTRING(args[2]));
+            runtimeError(vm, message);
+        }
+        else
+        {
+            runtimeError(vm, "Assert.lessThan() failed.");
+        }
+
+        exit(70);
+    }
+
+    return NULL_VAL;
+}
+
+static Value
+assertLessThanOrEqual(GhostVM *vm, int argCount, Value *args)
+{
+    if (argCount < 2)
+    {
+        runtimeError(vm, "Assert.lessThanOrEqual() expects at least two arguments (%d given).", argCount);
+        return NULL_VAL;
+    }
+
+    Value a = args[0];
+    Value b = args[1];
+    Value result = BOOL_VAL(a <= b);
+
+    if (isFalsey(result))
+    {
+        if (argCount == 3)
+        {
+            char message[1024];
+            sprintf(message, "Failed asserting that %s", AS_CSTRING(args[2]));
+            runtimeError(vm, message);
+        }
+        else
+        {
+            runtimeError(vm, "Assert.lessThanOrEqual() failed.");
+        }
+
+        exit(70);
+    }
+
+    return NULL_VAL;
+}
+
 void registerAssertModule(GhostVM *vm)
 {
     ObjString *name = copyString(vm, "Assert", 6);
@@ -220,6 +348,10 @@ void registerAssertModule(GhostVM *vm)
     defineNativeMethod(vm, klass, "isNull", assertIsNull);
     defineNativeMethod(vm, klass, "isNumber", assertIsNumber);
     defineNativeMethod(vm, klass, "isString", assertIsString);
+    defineNativeMethod(vm, klass, "greaterThan", assertGreaterThan);
+    defineNativeMethod(vm, klass, "greaterThanOrEqual", assertGreaterThanOrEqual);
+    defineNativeMethod(vm, klass, "lessThan", assertLessThan);
+    defineNativeMethod(vm, klass, "lessThanOrEqual", assertLessThanOrEqual);
 
     tableSet(vm, &vm->globals, name, OBJ_VAL(klass));
     pop(vm);
