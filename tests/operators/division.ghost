@@ -7,3 +7,6 @@ Assert.equals(x / -1, -10);
 
 Assert.equals(x / 2.5, 4);
 Assert.equals(20 / 2.5, 8);
+
+Assert.equals(x % 2, 0);
+Assert.equals(x % 3, 1);

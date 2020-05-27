@@ -11,7 +11,7 @@ assertIsTrue(GhostVM *vm, int argCount, Value *args)
 {
     if (argCount == 0)
     {
-        runtimeError(vm, "Assert.isTrue() expects at least one argument.");
+        runtimeError(vm, "Assert.isTrue() expects at least one argument (%d given).", argCount);
         return NULL_VAL;
     }
 
@@ -39,7 +39,7 @@ assertIsFalse(GhostVM *vm, int argCount, Value *args)
 {
     if (argCount == 0)
     {
-        runtimeError(vm, "Assert.isFalse() expects at least one argument.");
+        runtimeError(vm, "Assert.isFalse() expects at least one argument (%d given).", argCount);
         return NULL_VAL;
     }
 
@@ -67,7 +67,7 @@ assertEquals(GhostVM *vm, int argCount, Value *args)
 {
     if (argCount < 2)
     {
-        runtimeError(vm, "Assert.equals() expects at least two arguments.");
+        runtimeError(vm, "Assert.equals() expects at least two arguments (%d given).", argCount);
         return NULL_VAL;
     }
 
@@ -94,6 +94,34 @@ assertEquals(GhostVM *vm, int argCount, Value *args)
     return NULL_VAL;
 }
 
+static Value
+assertIsBool(GhostVM *vm, int argCount, Value *args)
+{
+    if (argCount == 0)
+    {
+        runtimeError(vm, "Assert.isBool() expects at least one argument (%d given).", argCount);
+        return NULL_VAL;
+    }
+
+    if (!IS_BOOL(args[0]))
+    {
+        if (argCount == 2)
+        {
+            char message[1024];
+            sprintf(message, "Failed asserting that %s", AS_CSTRING(args[2]));
+            runtimeError(vm, message);
+        }
+        else
+        {
+            runtimeError(vm, "Assert.isBool() failed.");
+        }
+
+        exit(70);
+    }
+
+    return NULL_VAL;
+}
+
 void registerAssertModule(GhostVM *vm)
 {
     ObjString *name = copyString(vm, "Assert", 6);
@@ -104,6 +132,7 @@ void registerAssertModule(GhostVM *vm)
     defineNativeMethod(vm, klass, "isTrue", assertIsTrue);
     defineNativeMethod(vm, klass, "isFalse", assertIsFalse);
     defineNativeMethod(vm, klass, "equals", assertEquals);
+    defineNativeMethod(vm, klass, "isBool", assertIsBool);
 
     tableSet(vm, &vm->globals, name, OBJ_VAL(klass));
     pop(vm);
